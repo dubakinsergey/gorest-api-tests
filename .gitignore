@@ -110,3 +110,7 @@ allure-results
 .DS_Store
 target/
 allure-report
+
+# Local config with secrets
+config.properties
+src/main/resources/config.properties
