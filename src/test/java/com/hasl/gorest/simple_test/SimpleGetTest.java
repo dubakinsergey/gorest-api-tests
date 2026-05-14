@@ -8,13 +8,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SimpleGetTest {
 
+    private static final String TOKEN = "your_token_here";
+    private static final String BASE_URL = "https://gorest.co.in/public/v2";
+
     @Test
     public void getUsersTest() {
-
-        // 1. Отправляем GET запрос
         var response = RestAssured.given()
-                .baseUri("https://gorest.co.in/public/v2")
-                .header("Authorization", "Bearer твой_токен_сюда")
+                .baseUri(BASE_URL)
+                .header("Authorization", "Bearer " + TOKEN)
                 .contentType(ContentType.JSON)
                 .when()
                 .get("/users")
@@ -22,14 +23,10 @@ public class SimpleGetTest {
                 .extract()
                 .response();
 
-        // 2. Проверяем статус
         assertThat(response.statusCode()).isEqualTo(200);
 
-        // 3. Проверяем, что тело не пустое
-        String body = response.asString();
-        assertThat(body).isNotEmpty();
+        assertThat(response.asString()).isNotEmpty();
 
-        // 4. Выводим первых двух пользователей (для наглядности)
-        System.out.println("Response body (первые 200 символов): " + body.substring(0, Math.min(200, body.length())));
+        System.out.println("First 200 chars: " + response.asString().substring(0, Math.min(200, response.asString().length())));
     }
 }
