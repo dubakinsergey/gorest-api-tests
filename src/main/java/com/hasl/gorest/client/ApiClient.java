@@ -33,4 +33,14 @@ public class ApiClient {
                 .extract()
                 .as(UserResponse.class);
     }
+
+    public UserResponse getUser(int userId) {
+
+        return spec.when()
+                .get("/users/" + userId)
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(UserResponse.class);
+    }
 }
