@@ -13,27 +13,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class UserApiTest {
 
-    private final ApiClient client = new ApiClient();
-    private int createdUserId;
+    private final ApiClient client = new ApiClient();  // 1 клиент на все тесты
+    private int createdUserId;  // запоминаем ID для очистки
 
+    // ==================================================
+    // CREATE: проверить создание пользователя
+    // ==================================================
     @Test
     public void createUserTest() {
-        UserRequest request = UserFactory.validUser();
+        UserRequest request = UserFactory.validUser();          // берём данные из фабрики
+        UserResponse response = client.createUser(request);     // отправляем запрос
+        createdUserId = response.getId();                       // сохраняем ID
 
-        UserResponse response = client.createUser(request);
-        createdUserId = response.getId();
-
-        assertThat(response.getId())
-                .as("ID должен быть положительным")
-                .isPositive();
-
-        assertThat(response.getName())
-                .as("Имя должно совпадать с отправленным")
-                .isEqualTo(request.getName());
-
-        assertThat(response.getEmail())
-                .as("Email должен совпадать с отправленным")
-                .isEqualTo(request.getEmail());
+        assertThat(response.getId()).isPositive();              // ID > 0
+        assertThat(response.getName()).isEqualTo(request.getName());
+        assertThat(response.getEmail()).isEqualTo(request.getEmail());
+        assertThat(response.getGender()).isEqualTo(request.getGender());
+        assertThat(response.getStatus()).isEqualTo(request.getStatus());
     }
 
     @AfterMethod
