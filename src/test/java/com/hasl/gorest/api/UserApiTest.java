@@ -53,6 +53,51 @@ public class UserApiTest {
     }
 
     // ==================================================
+    // UPDATE (PUT): проверить полное обновление
+    // ==================================================
+    @Test
+    public void updateUserTest() {
+
+        // 1. Создаём пользователя
+        UserRequest request = UserFactory.validUser();
+        UserResponse created = client.createUser(request);
+        createdUserId = created.getId();
+
+        // 2. Создаём DTO с новыми данными (PUT требует все поля)
+        UserRequest updatedRequest = UserRequest.builder()
+                .name("Обновлённое Имя")
+                .email("updated." + System.currentTimeMillis() + "@example.com")
+                .gender("female")
+                .status("inactive")
+                .build();
+
+        // 3. Отправляем PUT
+        UserResponse updated = client.updateUser(created.getId(), updatedRequest);
+
+        // 4. Проверяем, что данные обновились
+        assertThat(updated.getName())
+                .as("Имя должно обновиться")
+                .isEqualTo(updatedRequest.getName());
+
+        assertThat(updated.getEmail())
+                .as("Email должен обновиться")
+                .isEqualTo(updatedRequest.getEmail());
+
+        assertThat(updated.getGender())
+                .as("Пол должен обновиться")
+                .isEqualTo(updatedRequest.getGender());
+
+        assertThat(updated.getStatus())
+                .as("Статус должен обновиться")
+                .isEqualTo(updatedRequest.getStatus());
+
+        // 5. Проверяем, что ID не изменился
+        assertThat(updated.getId())
+                .as("ID не должен измениться")
+                .isEqualTo(created.getId());
+    }
+
+    // ==================================================
     // DELETE: проверить удаление пользователя
     // ==================================================
     @Test
