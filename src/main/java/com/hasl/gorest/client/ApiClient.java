@@ -48,6 +48,18 @@ public class ApiClient {
                 .as(UserResponse.class);
     }
 
+    public UserResponse updateUser(int userId, UserRequest request) {
+
+        return spec
+                .body(request)
+                .when()
+                .put("/users/" + userId)
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(UserResponse.class);
+    }
+
     // DELETE — удаляет пользователя
     public void deleteUser(int userId) {
 
