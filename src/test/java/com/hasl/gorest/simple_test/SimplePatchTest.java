@@ -11,7 +11,7 @@ public class SimplePatchTest {
     private static final String TOKEN = "your_token_here";
     private static final String BASE_URL = "https://gorest.co.in/public/v2";
 
-    @Test
+    @Test(groups = {"example", "smoke"})
     public void partiallyUpdateUserTest() {
         String uniqueEmail = "hasl.patch." + System.currentTimeMillis() + "@mail.ru";
 

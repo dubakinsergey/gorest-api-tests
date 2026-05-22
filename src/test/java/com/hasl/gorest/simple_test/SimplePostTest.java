@@ -14,7 +14,7 @@ public class SimplePostTest {
 
     private int createdUserId;
 
-    @Test
+    @Test(groups = {"example", "smoke"})
     public void createUserTest() {
         String uniqueEmail = "hasl.temp." + System.currentTimeMillis() + "@mail.ru";
 
