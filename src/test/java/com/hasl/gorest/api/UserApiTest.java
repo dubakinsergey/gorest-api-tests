@@ -15,7 +15,6 @@ public class UserApiTest {
 
     private final ApiClient client = new ApiClient();
 
-    private static final String USER_SCHEMA = "schemas/user-schema.json";
     private int createdUserId;
     private boolean isDeletedByTest = false;
 
