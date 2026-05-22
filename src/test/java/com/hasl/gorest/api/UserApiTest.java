@@ -18,7 +18,7 @@ public class UserApiTest {
 
     // ==================== POSITIVE TESTS ====================
 
-    @Test
+    @Test(groups = {"positive", "regression"})
     public void createUserTest() {
 
         UserRequest request = UserFactory.validUser();
@@ -32,7 +32,7 @@ public class UserApiTest {
         assertThat(response.getStatus()).isEqualTo(request.getStatus());
     }
 
-    @Test
+    @Test(groups = {"positive", "regression"})
     public void getUserTest() {
 
         UserRequest request = UserFactory.validUser();
@@ -48,7 +48,7 @@ public class UserApiTest {
         assertThat(fetched.getStatus()).isEqualTo(created.getStatus());
     }
 
-    @Test
+    @Test(groups = {"positive", "regression"})
     public void updateUserTest() {
 
         UserRequest request = UserFactory.validUser();
@@ -71,7 +71,7 @@ public class UserApiTest {
         assertThat(updated.getId()).isEqualTo(created.getId());
     }
 
-    @Test
+    @Test(groups = {"positive", "regression"})
     public void deleteUserTest() {
 
         UserRequest request = UserFactory.validUser();
@@ -88,7 +88,7 @@ public class UserApiTest {
 
     // ==================== NEGATIVE TESTS ====================
 
-    @Test
+    @Test(groups = {"negative", "regression"})
     public void createUserWithEmptyNameTest() {
 
         UserRequest request = UserRequest.builder()
@@ -110,7 +110,7 @@ public class UserApiTest {
         assertThat(response.statusCode()).isEqualTo(422);
     }
 
-    @Test
+    @Test(groups = {"negative", "regression"})
     public void createUserWithDuplicateEmailTest() {
 
         UserRequest request = UserFactory.validUser();
@@ -136,7 +136,7 @@ public class UserApiTest {
         assertThat(response.statusCode()).isEqualTo(422);
     }
 
-    @Test
+    @Test(groups = {"negative", "regression"})
     public void getUserWithInvalidIdTest() {
 
         var response = RestAssured.given()
@@ -152,7 +152,7 @@ public class UserApiTest {
 
     // ==================== CLEANUP ====================
 
-    @AfterMethod
+    @AfterMethod(groups = {"positive", "negative", "regression"})
     public void cleanUp() {
         if (createdUserId != 0 && !isDeletedByTest) {
             client.deleteUser(createdUserId);
