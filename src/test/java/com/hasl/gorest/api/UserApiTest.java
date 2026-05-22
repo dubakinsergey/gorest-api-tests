@@ -8,11 +8,13 @@ import io.restassured.RestAssured;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class UserApiTest {
 
     private final ApiClient client = new ApiClient();
+
     private int createdUserId;
     private boolean isDeletedByTest = false;
 
@@ -84,6 +86,26 @@ public class UserApiTest {
         isDeletedByTest = true;
 
         assertThat(client.existsUser(created.getId())).isFalse();
+    }
+
+    // ==================== SCHEMA VALIDATION ====================
+
+    @Test(groups = {"schema", "regression"})
+    public void validateUserSchemaTest() {
+
+        // 1. Создаём пользователя через существующий клиент
+        UserRequest request = UserFactory.validUser();
+        UserResponse created = client.createUser(request);
+        createdUserId = created.getId();
+
+        // 2. Получаем пользователя и проверяем схему
+        RestAssured.given()
+                .spec(client.getSpec())
+                .when()
+                .get("/users/" + created.getId())
+                .then()
+                .statusCode(200)
+                .body(matchesJsonSchemaInClasspath("schemas/user-schema.json"));
     }
 
     // ==================== NEGATIVE TESTS ====================
