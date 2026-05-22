@@ -4,6 +4,7 @@ import com.hasl.gorest.client.ApiClient;
 import com.hasl.gorest.factories.UserFactory;
 import com.hasl.gorest.models.UserRequest;
 import com.hasl.gorest.models.UserResponse;
+import io.restassured.RestAssured;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -11,40 +12,35 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class UserApiTest {
 
-    private final ApiClient client = new ApiClient();  // 1 клиент на все тесты
-    private int createdUserId;  // запоминаем ID для очистки
-    private boolean isDeletedByTest = false;  // флаг: тест сам удалил пользователя
+    private final ApiClient client = new ApiClient();
+    private int createdUserId;
+    private boolean isDeletedByTest = false;
 
-    // ==================================================
-    // CREATE: проверить создание пользователя
-    // ==================================================
+    // ==================== POSITIVE TESTS ====================
+
     @Test
     public void createUserTest() {
 
-        UserRequest request = UserFactory.validUser();          // берём данные из фабрики
-        UserResponse response = client.createUser(request);     // отправляем запрос
-        createdUserId = response.getId();                       // сохраняем ID
+        UserRequest request = UserFactory.validUser();
+        UserResponse response = client.createUser(request);
+        createdUserId = response.getId();
 
-        assertThat(response.getId()).isPositive();              // ID > 0
+        assertThat(response.getId()).isPositive();
         assertThat(response.getName()).isEqualTo(request.getName());
         assertThat(response.getEmail()).isEqualTo(request.getEmail());
         assertThat(response.getGender()).isEqualTo(request.getGender());
         assertThat(response.getStatus()).isEqualTo(request.getStatus());
     }
 
-    // ==================================================
-    // READ: проверить получение пользователя по ID
-    // ==================================================
     @Test
     public void getUserTest() {
 
         UserRequest request = UserFactory.validUser();
-        UserResponse created = client.createUser(request);      // сначала создаём
+        UserResponse created = client.createUser(request);
         createdUserId = created.getId();
 
-        UserResponse fetched = client.getUser(created.getId()); // потом получаем
+        UserResponse fetched = client.getUser(created.getId());
 
-        // сравниваем, что данные совпадают
         assertThat(fetched.getId()).isEqualTo(created.getId());
         assertThat(fetched.getName()).isEqualTo(created.getName());
         assertThat(fetched.getEmail()).isEqualTo(created.getEmail());
@@ -52,18 +48,13 @@ public class UserApiTest {
         assertThat(fetched.getStatus()).isEqualTo(created.getStatus());
     }
 
-    // ==================================================
-    // UPDATE (PUT): проверить полное обновление
-    // ==================================================
     @Test
     public void updateUserTest() {
 
-        // 1. Создаём пользователя
         UserRequest request = UserFactory.validUser();
         UserResponse created = client.createUser(request);
         createdUserId = created.getId();
 
-        // 2. Создаём DTO с новыми данными (PUT требует все поля)
         UserRequest updatedRequest = UserRequest.builder()
                 .name("Обновлённое Имя")
                 .email("updated." + System.currentTimeMillis() + "@example.com")
@@ -71,35 +62,15 @@ public class UserApiTest {
                 .status("inactive")
                 .build();
 
-        // 3. Отправляем PUT
         UserResponse updated = client.updateUser(created.getId(), updatedRequest);
 
-        // 4. Проверяем, что данные обновились
-        assertThat(updated.getName())
-                .as("Имя должно обновиться")
-                .isEqualTo(updatedRequest.getName());
-
-        assertThat(updated.getEmail())
-                .as("Email должен обновиться")
-                .isEqualTo(updatedRequest.getEmail());
-
-        assertThat(updated.getGender())
-                .as("Пол должен обновиться")
-                .isEqualTo(updatedRequest.getGender());
-
-        assertThat(updated.getStatus())
-                .as("Статус должен обновиться")
-                .isEqualTo(updatedRequest.getStatus());
-
-        // 5. Проверяем, что ID не изменился
-        assertThat(updated.getId())
-                .as("ID не должен измениться")
-                .isEqualTo(created.getId());
+        assertThat(updated.getName()).isEqualTo(updatedRequest.getName());
+        assertThat(updated.getEmail()).isEqualTo(updatedRequest.getEmail());
+        assertThat(updated.getGender()).isEqualTo(updatedRequest.getGender());
+        assertThat(updated.getStatus()).isEqualTo(updatedRequest.getStatus());
+        assertThat(updated.getId()).isEqualTo(created.getId());
     }
 
-    // ==================================================
-    // DELETE: проверить удаление пользователя
-    // ==================================================
     @Test
     public void deleteUserTest() {
 
@@ -107,28 +78,85 @@ public class UserApiTest {
         UserResponse created = client.createUser(request);
         createdUserId = created.getId();
 
-        // до удаления — существует
         assertThat(client.existsUser(created.getId())).isTrue();
 
         client.deleteUser(created.getId());
-        isDeletedByTest = true;  // помечаем, что пользователь уже удалён
+        isDeletedByTest = true;
 
-        // после удаления — не существует
         assertThat(client.existsUser(created.getId())).isFalse();
     }
 
-    // ==================================================
-    // ОЧИСТКА: удаляем созданного пользователя после каждого теста
-    // ==================================================
+    // ==================== NEGATIVE TESTS ====================
+
+    @Test
+    public void createUserWithEmptyNameTest() {
+
+        UserRequest request = UserRequest.builder()
+                .name("")
+                .email("empty.name." + System.currentTimeMillis() + "@example.com")
+                .gender("male")
+                .status("active")
+                .build();
+
+        var response = RestAssured.given()
+                .spec(client.getSpec())
+                .body(request)
+                .when()
+                .post("/users")
+                .then()
+                .extract()
+                .response();
+
+        assertThat(response.statusCode()).isEqualTo(422);
+    }
+
+    @Test
+    public void createUserWithDuplicateEmailTest() {
+
+        UserRequest request = UserFactory.validUser();
+        UserResponse created = client.createUser(request);
+        createdUserId = created.getId();
+
+        UserRequest duplicateRequest = UserRequest.builder()
+                .name("Другой Хасл")
+                .email(created.getEmail())
+                .gender("female")
+                .status("inactive")
+                .build();
+
+        var response = RestAssured.given()
+                .spec(client.getSpec())
+                .body(duplicateRequest)
+                .when()
+                .post("/users")
+                .then()
+                .extract()
+                .response();
+
+        assertThat(response.statusCode()).isEqualTo(422);
+    }
+
+    @Test
+    public void getUserWithInvalidIdTest() {
+
+        var response = RestAssured.given()
+                .spec(client.getSpec())
+                .when()
+                .get("/users/999999999")
+                .then()
+                .extract()
+                .response();
+
+        assertThat(response.statusCode()).isEqualTo(404);
+    }
+
+    // ==================== CLEANUP ====================
+
     @AfterMethod
     public void cleanUp() {
-        // Удаляем только если:
-        // 1. Есть ID пользователя
-        // 2. Тест его ещё не удалил
         if (createdUserId != 0 && !isDeletedByTest) {
             client.deleteUser(createdUserId);
         }
-        // Сбрасываем флаги для следующего теста
         createdUserId = 0;
         isDeletedByTest = false;
     }
