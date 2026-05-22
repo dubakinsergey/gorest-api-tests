@@ -12,44 +12,41 @@ public class ApiClient {
 
     private final RequestSpecification spec;
 
-    // Конструктор — настраивается один раз при создании клиента
+    // Constructor: base URL, token, JSON, Allure logging
     public ApiClient() {
-
         this.spec = RestAssured.given()
-                .baseUri(ConfigManager.getConfig().baseUrl())      // из config.properties
+                .baseUri(ConfigManager.getConfig().baseUrl())
                 .header("Authorization", "Bearer " + ConfigManager.getConfig().apiToken())
                 .contentType(ContentType.JSON)
-                .filter(new AllureRestAssured())                   // логи в Allure
-                .log().ifValidationFails();                        // лог в консоль при падении
+                .filter(new AllureRestAssured())
+                .log().ifValidationFails();
     }
 
-    // CREATE — создаёт пользователя
+    // POST /users → 201
     public UserResponse createUser(UserRequest request) {
-
         return spec
-                .body(request)                                     // DTO → JSON
+                .body(request)
                 .when()
                 .post("/users")
                 .then()
-                .statusCode(201)                                 // проверка, что создано
-                .extract()
-                .as(UserResponse.class);                            // JSON → DTO
-    }
-
-    // READ — получает пользователя по ID
-    public UserResponse getUser(int userId) {
-
-        return spec
-                .when()
-                .get("/users/" + userId)
-                .then()
-                .statusCode(200)                                   // проверка, что найден
+                .statusCode(201)
                 .extract()
                 .as(UserResponse.class);
     }
 
-    public UserResponse updateUser(int userId, UserRequest request) {
+    // GET /users/{id} → 200
+    public UserResponse getUser(int userId) {
+        return spec
+                .when()
+                .get("/users/" + userId)
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(UserResponse.class);
+    }
 
+    // PUT /users/{id} → 200
+    public UserResponse updateUser(int userId, UserRequest request) {
         return spec
                 .body(request)
                 .when()
@@ -60,18 +57,32 @@ public class ApiClient {
                 .as(UserResponse.class);
     }
 
-    // DELETE — удаляет пользователя
-    public void deleteUser(int userId) {
-
-        spec.when()
-                .delete("/users/" + userId)
+    // PATCH /users/{id} → 200
+    public UserResponse patchUser(int userId, Object patchBody) {
+        return spec
+                .body(patchBody)
+                .when()
+                .patch("/users/" + userId)
                 .then()
-                .statusCode(204);                                  // No Content — успешно удалён
+                .statusCode(200)
+                .extract()
+                .as(UserResponse.class);
     }
 
+    // DELETE /users/{id} → 204
+    public void deleteUser(int userId) {
+        spec
+                .when()
+                .delete("/users/" + userId)
+                .then()
+                .statusCode(204);
+    }
+
+    // GET /users/{id} → true if 200, false if 404
     public boolean existsUser(int userId) {
         try {
-            spec.when()
+            spec
+                    .when()
                     .get("/users/" + userId)
                     .then()
                     .statusCode(200);
@@ -79,5 +90,10 @@ public class ApiClient {
         } catch (AssertionError e) {
             return false;
         }
+    }
+
+    // Getter for RequestSpecification (used in negative tests)
+    public RequestSpecification getSpec() {
+        return spec;
     }
 }
